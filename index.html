@@ -7,36 +7,13 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       text-align: center;
       background: #fff8f0;
-      margin: 0;
       padding: 20px;
     }
 
-    h1 {
-      color: #d35400;
-    }
-
-    .legenda {
-      margin: 15px 0;
-    }
-
-    .legenda span {
-      display: inline-block;
-      margin: 0 10px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      color: #fff;
-    }
-
-    .disponivel {
-      background: #27ae60;
-    }
-
-    .vendido {
-      background: #c0392b;
-    }
+    h1 { color: #d35400; }
 
     .grid {
       display: grid;
@@ -50,73 +27,61 @@
       padding: 15px;
       border-radius: 8px;
       color: #fff;
+      font-weight: bold;
       cursor: pointer;
-      font-weight: bold;
-      user-select: none;
     }
 
-    .numero.disponivel {
-      background: #2ecc71;
-    }
-
-    .numero.vendido {
-      background: #e74c3c;
-      cursor: not-allowed;
-    }
-
-    .contador {
-      margin: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
+    .disponivel { background: #2ecc71; }
+    .vendido { background: #e74c3c; cursor: not-allowed; }
 
     button {
-      padding: 10px 15px;
-      margin: 5px;
+      margin: 10px;
+      padding: 10px;
       border: none;
       border-radius: 6px;
-      cursor: pointer;
       background: #d35400;
-      color: #fff;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>Rifa do Arraiá da Olivia 🎉</h1>
+<h1>Rifa do Arraiá da Olivia 🎉</h1>
 
-  <div class="legenda">
-    <span class="disponivel">Disponível</span>
-    <span class="vendido">Vendido</span>
-  </div>
+<button onclick="ativarAdmin()">Modo Admin</button>
 
-  <div class="contador" id="contador"></div>
+<div id="grid" class="grid"></div>
 
-  <button onclick="ativarAdmin()">Modo Admin</button>
-  <button onclick="resetar()" id="resetBtn" style="display:none;">Resetar Rifa</button>
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  <div class="grid" id="grid"></div>
+  // 🔴 COLE AQUI SUA CONFIG DO FIREBASE
+  const firebaseConfig = {apiKey: "AIzaSyDT_nVi-hE3N4c7Nmbn7ShX4QfgYXrwDCI",
+  authDomain: "charraia-3cb24.firebaseapp.com",
+  databaseURL: "https://charraia-3cb24-default-rtdb.firebaseio.com",
+  projectId: "charraia-3cb24",
+  };
 
-<script>
-  const senha = "1234"; // você pode mudar aqui
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
   let admin = false;
+  const senha = "1234";
 
-  const grid = document.getElementById("grid");
-  const contador = document.getElementById("contador");
-  const resetBtn = document.getElementById("resetBtn");
+  const ref = doc(db, "rifa", "numeros");
 
-  let vendidos = JSON.parse(localStorage.getItem("rifa")) || [];
-
-  function salvar() {
-    localStorage.setItem("rifa", JSON.stringify(vendidos));
-  }
-
-  function atualizarContador() {
-    contador.innerText = `Vendidos: ${vendidos.length} / 100`;
-  }
-
-  function criarGrid() {
+  function criarGrid(vendidos) {
+    const grid = document.getElementById("grid");
     grid.innerHTML = "";
+
     for (let i = 1; i <= 100; i++) {
       const div = document.createElement("div");
       div.classList.add("numero");
@@ -129,46 +94,44 @@
 
       div.innerText = i;
 
-      div.onclick = () => {
+      div.onclick = async () => {
         if (!admin) return;
 
-        if (vendidos.includes(i)) {
-          vendidos = vendidos.filter(n => n !== i);
+        let novos = [...vendidos];
+
+        if (novos.includes(i)) {
+          novos = novos.filter(n => n !== i);
         } else {
-          vendidos.push(i);
+          novos.push(i);
         }
 
-        salvar();
-        criarGrid();
+        await setDoc(ref, { vendidos: novos });
       };
 
       grid.appendChild(div);
     }
-
-    atualizarContador();
   }
 
   function ativarAdmin() {
-    const tentativa = prompt("Digite a senha de administrador:");
+    const tentativa = prompt("Senha:");
     if (tentativa === senha) {
       admin = true;
-      alert("Modo admin ativado!");
-      resetBtn.style.display = "inline-block";
+      alert("Admin ativado");
     } else {
-      alert("Senha incorreta!");
+      alert("Senha incorreta");
     }
   }
 
-  function resetar() {
-    if (!admin) return;
-    if (confirm("Tem certeza que deseja resetar tudo?")) {
-      vendidos = [];
-      salvar();
-      criarGrid();
-    }
-  }
+  // 🔥 ATUALIZAÇÃO EM TEMPO REAL
+  onSnapshot(ref, (docSnap) => {
+    let vendidos = [];
 
-  criarGrid();
+    if (docSnap.exists()) {
+      vendidos = docSnap.data().vendidos || [];
+    }
+
+    criarGrid(vendidos);
+  });
 </script>
 
 </body>
