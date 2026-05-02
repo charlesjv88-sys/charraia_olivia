@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Rifa do Arraiá da Olivia 🎉</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #fff8f0;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #d35400;
+    }
+
+    .legenda {
+      margin: 15px 0;
+    }
+
+    .legenda span {
+      display: inline-block;
+      margin: 0 10px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: #fff;
+    }
+
+    .disponivel {
+      background: #27ae60;
+    }
+
+    .vendido {
+      background: #c0392b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 10px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .numero {
+      padding: 15px;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    .numero.disponivel {
+      background: #2ecc71;
+    }
+
+    .numero.vendido {
+      background: #e74c3c;
+      cursor: not-allowed;
+    }
+
+    .contador {
+      margin: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #d35400;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Rifa do Arraiá da Olivia 🎉</h1>
+
+  <div class="legenda">
+    <span class="disponivel">Disponível</span>
+    <span class="vendido">Vendido</span>
+  </div>
+
+  <div class="contador" id="contador"></div>
+
+  <button onclick="ativarAdmin()">Modo Admin</button>
+  <button onclick="resetar()" id="resetBtn" style="display:none;">Resetar Rifa</button>
+
+  <div class="grid" id="grid"></div>
+
+<script>
+  const senha = "1234"; // você pode mudar aqui
+  let admin = false;
+
+  const grid = document.getElementById("grid");
+  const contador = document.getElementById("contador");
+  const resetBtn = document.getElementById("resetBtn");
+
+  let vendidos = JSON.parse(localStorage.getItem("rifa")) || [];
+
+  function salvar() {
+    localStorage.setItem("rifa", JSON.stringify(vendidos));
+  }
+
+  function atualizarContador() {
+    contador.innerText = `Vendidos: ${vendidos.length} / 100`;
+  }
+
+  function criarGrid() {
+    grid.innerHTML = "";
+    for (let i = 1; i <= 100; i++) {
+      const div = document.createElement("div");
+      div.classList.add("numero");
+
+      if (vendidos.includes(i)) {
+        div.classList.add("vendido");
+      } else {
+        div.classList.add("disponivel");
+      }
+
+      div.innerText = i;
+
+      div.onclick = () => {
+        if (!admin) return;
+
+        if (vendidos.includes(i)) {
+          vendidos = vendidos.filter(n => n !== i);
+        } else {
+          vendidos.push(i);
+        }
+
+        salvar();
+        criarGrid();
+      };
+
+      grid.appendChild(div);
+    }
+
+    atualizarContador();
+  }
+
+  function ativarAdmin() {
+    const tentativa = prompt("Digite a senha de administrador:");
+    if (tentativa === senha) {
+      admin = true;
+      alert("Modo admin ativado!");
+      resetBtn.style.display = "inline-block";
+    } else {
+      alert("Senha incorreta!");
+    }
+  }
+
+  function resetar() {
+    if (!admin) return;
+    if (confirm("Tem certeza que deseja resetar tudo?")) {
+      vendidos = [];
+      salvar();
+      criarGrid();
+    }
+  }
+
+  criarGrid();
+</script>
+
+</body>
+</html>
