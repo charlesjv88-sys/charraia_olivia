@@ -90,25 +90,34 @@
         div.classList.add("vendido");
       } else {
         div.classList.add("disponivel");
+        const registro = vendidos.find(n => n.numero === i);
+
+if (registro) {
+  div.title = "Comprado por: " + registro.nome;
       }
 
       div.innerText = i;
 
       div.onclick = async () => {
-        if (!admin) return;
+  if (!admin) return;
 
-        let novos = [...vendidos];
+  let novos = [...vendidos];
+  const index = novos.findIndex(n => n.numero === i);
 
-        if (novos.includes(i)) {
-          novos = novos.filter(n => n !== i);
-        } else {
-          novos.push(i);
-        }
+  if (index !== -1) {
+    // remover (caso queira desfazer)
+    if (confirm("Remover este número?")) {
+      novos.splice(index, 1);
+    }
+  } else {
+    const nome = prompt("Nome de quem comprou:");
 
-        await setDoc(ref, { vendidos: novos });
-      };
+    if (!nome) return;
 
-      grid.appendChild(div);
+    novos.push({ numero: i, nome });
+  }
+
+  await setDoc(ref, { vendidos: novos });
     }
   }
 
